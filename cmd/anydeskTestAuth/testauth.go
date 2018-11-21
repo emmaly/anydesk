@@ -13,9 +13,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	a, _ := anydesk.New(os.Args[1], os.Args[2], nil)
+	a, err := anydesk.New(os.Args[1], os.Args[2], nil)
+	if err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+		os.Exit(1)
+	}
 
-	err := a.AuthTest()
+	err = a.AuthTest()
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
 		os.Exit(1)
