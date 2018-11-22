@@ -12,6 +12,7 @@ import (
 )
 
 const anyDeskBaseURL = "https://v1.api.anydesk.com:8081"
+const userAgentString = "https://github.com/emmaly/anydesk"
 
 // Errors
 var (
@@ -24,12 +25,14 @@ type AnyDesk struct {
 	apiKey     string
 	licenseID  string
 	httpClient *http.Client
+	userAgent  string
 	baseURL    string
 }
 
 // Options are optional options for an AnyDesk API client
 type Options struct {
 	HTTPClient *http.Client
+	UserAgent  string
 	BaseURL    string
 }
 
@@ -64,17 +67,22 @@ func New(apiKey, licenseID string, o *Options) (*AnyDesk, error) {
 		apiKey:     apiKey,
 		licenseID:  licenseID,
 		httpClient: o.HTTPClient,
+		userAgent:  o.UserAgent,
 		baseURL:    o.BaseURL,
-	}
-
-	if a.baseURL == "" {
-		a.baseURL = anyDeskBaseURL
 	}
 
 	if a.httpClient == nil {
 		a.httpClient = &http.Client{
 			Timeout: time.Second * 5,
 		}
+	}
+
+	if a.userAgent == "" {
+		a.userAgent = userAgentString
+	}
+
+	if a.baseURL == "" {
+		a.baseURL = anyDeskBaseURL
 	}
 
 	return a, nil
@@ -104,6 +112,7 @@ func (a *AnyDesk) makeRequest(method, resource, body string) (*http.Request, err
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("User-Agent", a.userAgent)
 	req.Header.Set("Authorization", authHeader)
 	return req, nil
 }
