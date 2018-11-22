@@ -4,7 +4,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -37,14 +36,14 @@ type Options struct {
 // GenericResult is a generic result struct
 type GenericResult struct {
 	Success     bool
-	Error       string `json:",omitempty"`
-	Code        string `json:",omitempty"`
-	Method      string `json:",omitempty"`
-	Resource    string `json:",omitempty"`
-	RequestTime string `json:"request-time,omitempty"`
-	ContentHash string `json:"content-hash,omitempty"`
-	Result      string `json:",omitempty"`
-	LicenseID   string `json:",omitempty"`
+	Error       string
+	Code        string
+	Method      string
+	Resource    string
+	RequestTime string `json:"request-time"`
+	ContentHash string `json:"content-hash"`
+	Result      string
+	LicenseID   string
 }
 
 // New returns a new AnyDesk API client
@@ -107,29 +106,4 @@ func (a *AnyDesk) makeRequest(method, resource, body string) (*http.Request, err
 	}
 	req.Header.Set("Authorization", authHeader)
 	return req, nil
-}
-
-// AuthTest tests to see if auth is working
-func (a *AnyDesk) AuthTest() (*GenericResult, error) {
-	req, err := a.makeRequest("GET", "/auth", "")
-	if err != nil {
-		return nil, err
-	}
-	resp, err := a.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	var gr *GenericResult
-	j := json.NewDecoder(resp.Body)
-	err = j.Decode(&gr)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode != 200 {
-		gr.Success = false
-		return gr, errors.New(resp.Status)
-	}
-	gr.Success = true
-	return gr, nil
 }
