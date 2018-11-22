@@ -73,7 +73,7 @@ func (a *AnyDesk) makeRequest(method, resource, body string) (*http.Request, err
 	// build the bodyHash
 	bh := sha1.New()
 	bh.Write([]byte(body))
-	bodyHash := bh.Sum(nil)
+	bodyHash := base64.StdEncoding.EncodeToString(bh.Sum(nil))
 
 	// build the requestString
 	requestString := fmt.Sprintf("%s\n%s\n%d\n%s", method, resource, timestamp, bodyHash)
