@@ -29,8 +29,8 @@ type Client struct {
 // Clients gets a list of individual AnyDesk-powered clients attached to this license
 // IncludeOffline is a bool
 // Limit <= 0 means unlimited
-// Sort is one of these strings:  "cid", "alias", "online"
-// Order is one of these variables: `anydesk.SortAsc` or `anydesk.SortDesc`
+// Sort is one of these strings:  	`anydesk.SortClientID`, `anydesk.SortAlias`, or `anydesk.SortOnline`
+// Order is one of these variables: `anydesk.OrderAsc` or `anydesk.OrderDesc`
 func (a *AnyDesk) Clients(includeOffline bool, offset, limit int, sort string, order bool) (*Clients, error) {
 	onlineOnlyStr := ""
 	if !includeOffline {

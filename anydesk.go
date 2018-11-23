@@ -55,6 +55,13 @@ const (
 	OrderDesc = true
 )
 
+// Sort constants
+const (
+	SortClientID = "cid"
+	SortAlias    = "alias"
+	SortOnline   = "online"
+)
+
 func orderString(b bool) string {
 	if b {
 		return "desc"
