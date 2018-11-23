@@ -49,6 +49,19 @@ type GenericResult struct {
 	LicenseID   string
 }
 
+// Order constants
+const (
+	OrderAsc  = false
+	OrderDesc = true
+)
+
+func orderString(b bool) string {
+	if b {
+		return "desc"
+	}
+	return "asc"
+}
+
 // New returns a new AnyDesk API client
 func New(apiKey, licenseID string, o *Options) (*AnyDesk, error) {
 	if apiKey == "" {
