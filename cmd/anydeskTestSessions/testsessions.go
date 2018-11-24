@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/emmaly/anydesk"
 )
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Printf("%s <apiKey> <licenseID> [clientID]\n", os.Args[0])
+		fmt.Printf("%s <apiKey> <licenseID> [sessionID]\n", os.Args[0])
 		os.Exit(1)
 	}
 
@@ -26,15 +27,16 @@ func main() {
 			fmt.Printf("Error: %s\n", err.Error())
 			os.Exit(1)
 		}
-		client, err := a.Client(int(i))
+		client, err := a.Session(int(i))
 		if err != nil {
 			fmt.Printf("Error: %s\n", err.Error())
 			os.Exit(1)
 		}
 		fmt.Printf("%+v\n", client)
 	} else {
-		data, err := a.Clients(&anydesk.ClientsOptions{
-			IncludeOffline: false,
+		data, err := a.Sessions(&anydesk.SessionsOptions{
+			TimeAfter: time.Now().Add(time.Hour * -24),
+			Sort:      anydesk.SortTimeStart,
 		})
 		if err != nil {
 			fmt.Printf("Error: %s\n", err.Error())

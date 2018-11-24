@@ -3,7 +3,8 @@ package anydesk
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	"net/url"
+	"strconv"
 )
 
 // Clients is a response for a Clients method call
@@ -26,20 +27,36 @@ type Client struct {
 	RecentSessions []Session `json:"last-sessions"`
 }
 
+// ClientsOptions are options for client list query
+type ClientsOptions struct {
+	IncludeOffline bool   // Default is false.
+	Offset         int    // The index of the first item to be returned.
+	Limit          int    // Defaults to unlimited.
+	Sort           string // `anydesk.SortClientID`, `anydesk.SortAlias`, or `anydesk.SortOnline`
+	Order          bool   // `anydesk.OrderDesc` (default) or `anydesk.OrderAsc`
+}
+
 // Clients gets a list of individual AnyDesk-powered clients attached to this license
-// IncludeOffline is a bool
-// Limit <= 0 means unlimited
-// Sort is one of these strings:  	`anydesk.SortClientID`, `anydesk.SortAlias`, or `anydesk.SortOnline`
-// Order is one of these variables: `anydesk.OrderAsc` or `anydesk.OrderDesc`
-func (a *AnyDesk) Clients(includeOffline bool, offset, limit int, sort string, order bool) (*Clients, error) {
-	onlineOnlyStr := ""
-	if !includeOffline {
-		onlineOnlyStr = "&online"
+func (a *AnyDesk) Clients(opts *ClientsOptions) (*Clients, error) {
+	q := make(url.Values)
+	if opts != nil {
+		if !opts.IncludeOffline {
+			q.Set("online", "true")
+		}
+		if opts.Offset > 0 {
+			q.Set("offset", strconv.Itoa(opts.Offset))
+		}
+		if opts.Limit > 0 {
+			q.Set("limit", strconv.Itoa(opts.Limit))
+		}
+		if opts.Sort != "" {
+			q.Set("sort", opts.Sort)
+		}
+		if opts.Order {
+			q.Set("order", "asc")
+		}
 	}
-	if limit <= 0 {
-		limit = -1
-	}
-	req, err := a.makeRequest("GET", fmt.Sprintf("/clients?offset=%d&limit=%d&sort=%s&order=%s%s", offset, limit, sort, orderString(order), onlineOnlyStr), "")
+	req, err := a.makeRequest("GET", "clients", &q, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +79,7 @@ func (a *AnyDesk) Clients(includeOffline bool, offset, limit int, sort string, o
 
 // Client returns data about a specific client
 func (a *AnyDesk) Client(id int) (*Client, error) {
-	req, err := a.makeRequest("GET", fmt.Sprintf("/clients/%d", id), "")
+	req, err := a.makeRequest("GET", makeResource("clients", id), nil, nil)
 	if err != nil {
 		return nil, err
 	}

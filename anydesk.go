@@ -4,20 +4,27 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
 
-const anyDeskBaseURL = "https://v1.api.anydesk.com:8081"
-const userAgentString = "https://github.com/emmaly/anydesk"
+const (
+	anyDeskBaseURL  = "https://v1.api.anydesk.com:8081"
+	userAgentString = "https://github.com/emmaly/anydesk"
+)
 
 // Errors
 var (
 	ErrMissingAPIKey    = errors.New("missing API Key")
 	ErrMissingLicenseID = errors.New("missing License ID")
+	ErrBadResourceField = errors.New("bad resource field")
 )
 
 // AnyDesk is an AnyDesk API client
@@ -49,17 +56,23 @@ type GenericResult struct {
 	LicenseID   string
 }
 
-// Order constants
-const (
-	OrderAsc  = false
-	OrderDesc = true
+// Sort constants
+var (
+	SortClientID     = "cid"
+	SortAlias        = "alias"
+	SortOnline       = "online"
+	SortClientIDFrom = "from.cid"
+	SortClientIDTo   = "to.cid"
+	SortTimeStart    = "start-time"
+	SortTimeEnd      = "end-time"
+	SortDuration     = "duration"
 )
 
-// Sort constants
+// Direction constants
 const (
-	SortClientID = "cid"
-	SortAlias    = "alias"
-	SortOnline   = "online"
+	DirectionAny = ""
+	DirectionIn  = "in"
+	DirectionOut = "out"
 )
 
 func orderString(b bool) string {
@@ -103,13 +116,37 @@ func New(apiKey, licenseID string, o *Options) (*AnyDesk, error) {
 
 	if a.baseURL == "" {
 		a.baseURL = anyDeskBaseURL
+	} else {
+		a.baseURL = strings.TrimRight(a.baseURL, "/")
 	}
 
 	return a, nil
 }
 
-func (a *AnyDesk) makeRequest(method, resource, body string) (*http.Request, error) {
+var cleanupResourceQuery = regexp.MustCompile("(^|&)(online)=[^&]*(&|$)")
+
+func (a *AnyDesk) makeRequest(method, resource string, query *url.Values, data interface{}) (*http.Request, error) {
 	timestamp := time.Now().Unix()
+
+	// build the URL
+	resource = "/" + strings.TrimLeft(resource, "/")
+	if query != nil {
+		q := query.Encode()
+		q = cleanupResourceQuery.ReplaceAllString(q, "$1$2$3")
+		if q != "" {
+			resource += "?" + q
+		}
+	}
+
+	// build the body
+	var body string
+	if data != nil {
+		bodyBytes, err := json.Marshal(data)
+		if err != nil {
+			return nil, err
+		}
+		body = string(bodyBytes)
+	}
 
 	// build the bodyHash
 	bh := sha1.New()
@@ -135,4 +172,17 @@ func (a *AnyDesk) makeRequest(method, resource, body string) (*http.Request, err
 	req.Header.Set("User-Agent", a.userAgent)
 	req.Header.Set("Authorization", authHeader)
 	return req, nil
+}
+
+func makeResource(r ...interface{}) string {
+	part := make([]string, len(r))
+	for i, v := range r {
+		switch v.(type) {
+		case string:
+			part[i] = v.(string)
+		case int:
+			part[i] = strconv.Itoa(v.(int))
+		}
+	}
+	return strings.Join(part, "/")
 }

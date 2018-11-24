@@ -7,7 +7,7 @@ import (
 
 // AuthTest tests to see if auth is working
 func (a *AnyDesk) AuthTest() (*GenericResult, error) {
-	req, err := a.makeRequest("GET", "/auth", "")
+	req, err := a.makeRequest("GET", "auth", nil, nil)
 	if err != nil {
 		return nil, err
 	}

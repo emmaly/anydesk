@@ -36,7 +36,7 @@ type SysInfo struct {
 
 // SysInfo gets general license info and AnyDesk system information
 func (a *AnyDesk) SysInfo() (*SysInfo, error) {
-	req, err := a.makeRequest("GET", "/sysinfo", "")
+	req, err := a.makeRequest("GET", "sysinfo", nil, nil)
 	if err != nil {
 		return nil, err
 	}
