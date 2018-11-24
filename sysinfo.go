@@ -51,7 +51,7 @@ func (a *AnyDesk) SysInfo() (*SysInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return data, errors.New(resp.Status)
 	}
 	return data, nil

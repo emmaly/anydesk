@@ -33,7 +33,7 @@ type ClientsOptions struct {
 	Offset         int    // The index of the first item to be returned.
 	Limit          int    // Defaults to unlimited.
 	Sort           string // `anydesk.SortClientID`, `anydesk.SortAlias`, or `anydesk.SortOnline`
-	Order          bool   // `anydesk.OrderDesc` (default) or `anydesk.OrderAsc`
+	Order          bool   // `false` is descending (default), `true` is ascending
 }
 
 // Clients gets a list of individual AnyDesk-powered clients attached to this license
@@ -54,6 +54,8 @@ func (a *AnyDesk) Clients(opts *ClientsOptions) (*Clients, error) {
 		}
 		if opts.Order {
 			q.Set("order", "asc")
+		} else {
+			q.Set("order", "desc")
 		}
 	}
 	req, err := a.makeRequest("GET", "clients", &q, nil)
@@ -71,7 +73,7 @@ func (a *AnyDesk) Clients(opts *ClientsOptions) (*Clients, error) {
 	if err != nil {
 		return nil, err
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return data, errors.New(resp.Status)
 	}
 	return data, nil
@@ -94,8 +96,31 @@ func (a *AnyDesk) Client(id int) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return data, errors.New(resp.Status)
 	}
 	return data, nil
+}
+
+// ClientAlias sets the alias for a specific client
+func (a *AnyDesk) ClientAlias(id int, alias string) error {
+	var value *string
+	if alias != "" {
+		value = &alias
+	}
+	req, err := a.makeRequest("PATCH", makeResource("clients", id), nil, map[string]*string{
+		"alias": value, // if it's null, then it will erase the alias instead of just being empty
+	})
+	if err != nil {
+		return err
+	}
+	resp, err := a.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return errors.New(resp.Status)
+	}
+	return nil
 }

@@ -22,7 +22,7 @@ func (a *AnyDesk) AuthTest() (*GenericResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		data.Success = false
 		return data, errors.New(resp.Status)
 	}

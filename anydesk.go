@@ -139,6 +139,7 @@ func (a *AnyDesk) makeRequest(method, resource string, query *url.Values, data i
 	}
 
 	// build the body
+	var contentType string
 	var body string
 	if data != nil {
 		bodyBytes, err := json.Marshal(data)
@@ -146,6 +147,7 @@ func (a *AnyDesk) makeRequest(method, resource string, query *url.Values, data i
 			return nil, err
 		}
 		body = string(bodyBytes)
+		contentType = "application/json"
 	}
 
 	// build the bodyHash
@@ -171,6 +173,9 @@ func (a *AnyDesk) makeRequest(method, resource string, query *url.Values, data i
 	}
 	req.Header.Set("User-Agent", a.userAgent)
 	req.Header.Set("Authorization", authHeader)
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
+	}
 	return req, nil
 }
 
